@@ -47,6 +47,11 @@ while True:
             html = handle.read()
         except:
             print 'ERROR: XBMC not available'
+            text.config(text='ERROR: XBMC not available')
+            text.config(font=("Helvetica", fontsize))
+            text.pack(side=tk.TOP, ipady=50)
+            root.update()
+            
             if noupdates < 600: noupdates+=1
             time.sleep(1)
             continue
