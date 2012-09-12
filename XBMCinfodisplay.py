@@ -47,7 +47,7 @@ while True:
             html = handle.read()
         except:
             print 'ERROR: XBMC not available'
-            output = ‘ERROR: XBMC not available\n\n’+ time.strftime('%I:%M %p\n\n%b %d, %Y')
+            output = 'ERROR: XBMC not available\n\n' + time.strftime('%I:%M %p\n\n%b %d, %Y')
             text.config(text=output)
             text.config(font=("Helvetica", fontsize))
             text.pack(side=tk.TOP, ipady=50)
