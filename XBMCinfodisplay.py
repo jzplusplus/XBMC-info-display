@@ -30,7 +30,7 @@ text.pack()
 timeText = tk.Label(frame, text="Testing...", font=("Helvetica", 55), fg='white', bg='black', wraplength=w-50)
 timeText.pack()
 
-#root.configure(cursor='@1x1.xbm white')
+root.configure(cursor='@1x1.xbm white')
 
 base64string = base64.encodestring('%s:%s' % ('xbmc', 'xbmc'))[:-1]
 authheader =  "Basic %s" % base64string
