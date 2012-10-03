@@ -5,9 +5,12 @@ Created on Aug 14, 2012
 '''
 
 import time
+from random import choice
 import urllib2, base64
 
 import Tkinter as tk
+
+quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', '))']
 
 root = tk.Tk()
 
@@ -89,7 +92,7 @@ def getdata():
         output += "\nERROR: badly formatted response. Missing 'Filename' field."
     
     elif dictionary['Filename'] == '[Nothing Playing]':
-        output += '\nGO OUTSIDE!'
+        output += '\n' + choice(quotes)
         if noupdates < 600: noupdates+=1
         fontsize = 70
         timeText.config(font=("Helvetica", 70))
