@@ -10,7 +10,8 @@ import urllib2, base64
 
 import Tkinter as tk
 
-quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', '))']
+quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', ') )']
+currentQuote = ''
 
 root = tk.Tk()
 
@@ -92,7 +93,7 @@ def getdata():
         output += "\nERROR: badly formatted response. Missing 'Filename' field."
     
     elif dictionary['Filename'] == '[Nothing Playing]':
-        output += '\n' + choice(quotes)
+        output += '\n' + currentQuote
         if noupdates < 600: noupdates+=1
         fontsize = 70
         timeText.config(font=("Helvetica", 70))
@@ -157,6 +158,10 @@ def getdata():
     
     timeText.pack(side=tk.BOTTOM, ipady=30)
 
+def newQuote():
+    global currentquote
+    currentquote = choice(quotes)
+    root.after(3600000, newQuote)
 
 def loop():
     getdata()
@@ -164,4 +169,5 @@ def loop():
     root.after(500,loop)
     
 root.after(500,loop)
+newQuote()
 root.mainloop()
