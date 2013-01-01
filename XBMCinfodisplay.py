@@ -7,6 +7,7 @@ Created on Aug 14, 2012
 import time
 from random import choice
 import urllib2, base64
+import jsonrpclib, json
 
 import Tkinter as tk
 
@@ -36,10 +37,20 @@ timeText.pack()
 
 root.configure(cursor='@1x1.xbm white')
 
-base64string = base64.encodestring('%s:%s' % ('xbmc', 'xbmc'))[:-1]
-authheader =  "Basic %s" % base64string
-req = urllib2.Request("http://192.168.0.10:8080/xbmcCmds/xbmcHttp?command=GetCurrentlyPlaying()")
-req.add_header("Authorization", authheader)
+def XBMCfunction(func, params=[]):
+    jsondata = jsonrpclib.dumps(params, func)
+    #print jsondata
+
+    base64string = base64.encodestring('%s:%s' % ('xbmc', 'xbmc'))[:-1]
+    authheader =  "Basic %s" % base64string
+    
+    req = urllib2.Request("http://hazmatt.org:8080/jsonrpc", jsondata)
+    req.add_header("Authorization", authheader)
+    req.add_header('Content-Type', 'application/json')
+    handle = urllib2.urlopen(req, timeout=1)
+    html = handle.read()
+    result = json.loads(html)
+    return result['result']
 
 noupdates = 0
 linecount = 0
@@ -48,9 +59,100 @@ fontsize = 65
 def getdata():
     global noupdates, text, timeText, linecount, fontsize
     try:
-        handle = urllib2.urlopen(req, timeout=1)
+        players = XBMCfunction('Player.GetActivePlayers')
         
-        html = handle.read()
+        output = '' 
+        
+        if len(players) == 0:
+            output += '\n' + currentquote
+            timeOutput = ''
+            if noupdates < 600: noupdates+=1
+            fontsize = 70
+            timeText.config(font=("Helvetica", 70))
+        
+        else:
+            linecount = 0
+            noupdates=0
+            
+            playerid = players[0]['playerid']
+            currentJSON = XBMCfunction('Player.GetItem', {'playerid':playerid, 'properties':['showtitle', 'file']})
+            timeJSON = XBMCfunction('Player.GetProperties', {'playerid': playerid, 'properties':['time','totaltime']})
+            
+            showtitle = currentJSON['item']['showtitle']
+            label = currentJSON['item']['label']
+            
+            isYoutube = False
+            try: currentJSON['item']['file'].index('youtube.com')
+            except ValueError: isYoutube = True
+            
+            seekTime = ''
+            totTime = ''
+            
+            if timeJSON['totaltime']['hours'] > 0:
+                totTime += str(timeJSON['totaltime']['hours']) + ':'
+                if timeJSON['totaltime']['hours'] < 10:
+                    seekTime += str(timeJSON['time']['hours']) + ':'
+                else:
+                    seekTime += str(timeJSON['time']['hours']).zfill(2) + ':'
+                    
+                seekTime += str(timeJSON['time']['minutes']).zfill(2) + ':' + str(timeJSON['time']['seconds']).zfill(2)
+                totTime += str(timeJSON['totaltime']['minutes']).zfill(2) + ':' + str(timeJSON['totaltime']['seconds']).zfill(2)
+                
+            else:
+                totTime += str(timeJSON['totaltime']['minutes']) + ':'
+                if timeJSON['totaltime']['minutes'] < 10:
+                    seekTime += str(timeJSON['time']['minutes']) + ':'
+                else:
+                    seekTime += str(timeJSON['time']['minutes']).zfill(2) + ':'
+                    
+                seekTime += str(timeJSON['time']['seconds']).zfill(2)
+                totTime += str(timeJSON['totaltime']['seconds']).zfill(2)
+            
+            if(isYoutube):
+                #Youtube
+                output += 'YouTube: '
+                linecount += len('YouTube: ')/26 + 1
+            
+            elif len(showtitle) > 0:
+                #TV show
+                output += showtitle + '\n'
+                linecount += len(showtitle)/26 + 1
+                
+            output += label
+            linecount += len(label)/26 + 1
+        
+            timeOutput = seekTime +' / '+ totTime
+        
+        ts = time.strftime('%I:%M %p')
+        if ts[0] == '0': ts = ts[1:]
+        
+        timeOutput += '\n' + ts
+        if noupdates >= 600:
+            ts = time.strftime('%I:%M %p\n\n%b %d, %Y')
+            if ts[0] == '0': ts = ts[1:-1]
+            output = '\n'+ ts
+            timeOutput = ''
+        
+        #output = 'blah\nblah\nblah\nblahhhalhfljdlkfadfaldksflasdhflhasdlf'
+        text.config(text=output)
+        timeText.config(text=timeOutput)
+    
+        if linecount > 4: fontsize = 40
+        else: fontsize = 55
+        text.config(font=("Helvetica", fontsize))
+        text.pack(side=tk.TOP, ipady=50)
+        
+        #dictionary['Changed'] = '1'
+        #if 'Changed' in dictionary and dictionary['Changed'] == '1':
+        #    fontsize = 70
+        #    while text.winfo_height() > 200:
+        #        print text.winfo_height(), fontsize
+        #        fontsize -= 1
+        #        text.config(font=("Helvetica", fontsize))
+        #        text.pack(side=tk.TOP, ipady=50)
+        
+        timeText.pack(side=tk.BOTTOM, ipady=30)
+        
     except:
         print 'ERROR: XBMC not available'
         output = 'ERROR: XBMC not available\n\n'
@@ -65,98 +167,6 @@ def getdata():
         
         if noupdates < 600: noupdates+=1
         return
-    
-    html = html.replace('<html>','')
-    html = html.replace('</html>','')
-
-    index = html.find(':')
-    if index == -1: 
-        if noupdates < 600: noupdates+=1
-        return
-
-    items = html.split('<li>')
-    #print items
-    dictionary = {}
-
-    for item in items:
-        item = item.replace('\n','')
-        
-        index = item.find(':')
-        
-        label = item[:index]
-        data = item[index+1:]
-        
-        dictionary[label] = data
-    
-    output = '' 
-    if not 'Filename' in dictionary:
-        output += "\nERROR: badly formatted response. Missing 'Filename' field."
-    
-    elif dictionary['Filename'] == '[Nothing Playing]':
-        output += '\n' + currentquote
-        if noupdates < 600: noupdates+=1
-        fontsize = 70
-        timeText.config(font=("Helvetica", 70))
-    else:
-        timeText.config(font=("Helvetica", 55))
-        linecount = 0
-        noupdates=0
-        if not 'Title' in dictionary:
-            dictionary['Title'] = dictionary['Filename'].split('/')[-1]
-        
-        if 'Show Title' in dictionary:
-            #TV show
-            output += dictionary['Show Title'] + '\n'
-            linecount += len(dictionary['Show Title'])/26 + 1
-            try:
-                output += 'S' + dictionary['Season'] + ' E' + dictionary['Episode']
-            except KeyError:
-                output += 'Ep'
-            
-            output += ': ' + dictionary['Title']
-            linecount += (len(dictionary['Title'])+6)/26 + 1
-            
-        elif 'Artist' in dictionary:
-            #Music
-            output += 'Artist: '+ dictionary['Artist'] + '\nSong: '+ dictionary['Title'] + '\n'
-        
-        elif dictionary['Filename'].find('youtube.com') >= 0:
-            #YouTube
-            output += 'YouTube: '+ dictionary['Title']
-            linecount += len(dictionary['Title'])/26 + 1
-        else:
-            #Movie
-            output += dictionary['Title']
-            linecount += len(dictionary['Title'])/26 + 1
-    #print dictionary
-    
-    try:
-        timeOutput = dictionary['Time'] +' / '+ dictionary['Duration']
-    except KeyError:
-        timeOutput = ''
-        pass
-    timeOutput += '\n' + time.strftime('%I:%M %p') 
-    if noupdates >= 600:
-        output = '\n'+ time.strftime('%I:%M %p\n\n%b %d, %Y')
-        timeOutput = ''
-    
-    #output = 'blah\nblah\nblah\nblahhhalhfljdlkfadfaldksflasdhflhasdlf'
-    text.config(text=output)
-    timeText.config(text=timeOutput)
-
-    text.config(font=("Helvetica", fontsize))
-    text.pack(side=tk.TOP, ipady=50)
-    
-    #dictionary['Changed'] = '1'
-    #if 'Changed' in dictionary and dictionary['Changed'] == '1':
-    #    fontsize = 70
-    #    while text.winfo_height() > 200:
-    #        print text.winfo_height(), fontsize
-    #        fontsize -= 1
-    #        text.config(font=("Helvetica", fontsize))
-    #        text.pack(side=tk.TOP, ipady=50)
-    
-    timeText.pack(side=tk.BOTTOM, ipady=30)
 
 def newQuote():
     global currentquote
