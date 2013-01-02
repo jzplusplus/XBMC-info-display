@@ -154,7 +154,6 @@ def getdata():
         timeText.pack(side=tk.BOTTOM, ipady=30)
         
     except:
-        raise
         print 'ERROR: XBMC not available'
         output = 'ERROR: XBMC not available\n\n'
         toutput = time.strftime('%I:%M %p\n\n%b %d, %Y')
