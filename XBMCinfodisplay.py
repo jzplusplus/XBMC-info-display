@@ -11,7 +11,7 @@ import jsonrpclib, json
 
 import Tkinter as tk
 
-quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', ') )']
+quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', ') )', '/)(^3^)(\\']
 currentquote = ''
 
 root = tk.Tk()
@@ -44,7 +44,7 @@ def XBMCfunction(func, params=[]):
     base64string = base64.encodestring('%s:%s' % ('xbmc', 'xbmc'))[:-1]
     authheader =  "Basic %s" % base64string
     
-    req = urllib2.Request("http://hazmatt.org:8080/jsonrpc", jsondata)
+    req = urllib2.Request("http://192.168.0.10:8080/jsonrpc", jsondata)
     req.add_header("Authorization", authheader)
     req.add_header('Content-Type', 'application/json')
     handle = urllib2.urlopen(req, timeout=1)
@@ -137,8 +137,8 @@ def getdata():
         text.config(text=output)
         timeText.config(text=timeOutput)
     
-        if linecount > 4: fontsize = 40
-        else: fontsize = 55
+        if linecount > 4: fontsize = 50
+        else: fontsize = 65
         text.config(font=("Helvetica", fontsize))
         text.pack(side=tk.TOP, ipady=50)
         
@@ -154,6 +154,7 @@ def getdata():
         timeText.pack(side=tk.BOTTOM, ipady=30)
         
     except:
+        raise
         print 'ERROR: XBMC not available'
         output = 'ERROR: XBMC not available\n\n'
         toutput = time.strftime('%I:%M %p\n\n%b %d, %Y')
@@ -164,7 +165,7 @@ def getdata():
         timeText.config(text=toutput)
         timeText.config(font=("Helvetica", 70))
         timeText.pack(side=tk.TOP, ipady=50)
-        
+       
         if noupdates < 600: noupdates+=1
         return
 
