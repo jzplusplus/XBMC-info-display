@@ -35,7 +35,7 @@ text.pack()
 timeText = tk.Label(frame, text="Testing...", font=("Helvetica", 55), fg='white', bg='black', wraplength=w-50)
 timeText.pack()
 
-root.configure(cursor='@1x1.xbm white')
+#root.configure(cursor='@1x1.xbm white')
 
 def XBMCfunction(func, params=[]):
     jsondata = jsonrpclib.dumps(params, func)
@@ -81,9 +81,9 @@ def getdata():
             showtitle = currentJSON['item']['showtitle']
             label = currentJSON['item']['label']
             
-            isYoutube = False
+            isYoutube = True
             try: currentJSON['item']['file'].index('youtube.com')
-            except ValueError: isYoutube = True
+            except ValueError: isYoutube = False
             
             seekTime = ''
             totTime = ''
