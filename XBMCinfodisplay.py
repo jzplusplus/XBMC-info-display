@@ -129,7 +129,7 @@ def getdata():
         timeOutput += '\n' + ts
         if noupdates >= 600:
             ts = time.strftime('%I:%M %p\n\n%b %d, %Y')
-            if ts[0] == '0': ts = ts[1:-1]
+            if ts[0] == '0': ts = ts[1:]
             output = '\n'+ ts
             timeOutput = ''
         
