@@ -5,14 +5,14 @@ Created on Aug 14, 2012
 '''
 
 import time
-from random import choice
+#from random import choice
 import urllib2, base64
 import jsonrpclib, json
 
 import Tkinter as tk
 
-quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', ') )', '/)(^3^)(\\']
-currentquote = ''
+#quotes = ['SMDG2K!', 'Go Outside!', 'Imhotep is invisible', ') )', '/)(^3^)(\\']
+#currentquote = ''
 
 root = tk.Tk()
 
@@ -35,7 +35,9 @@ text.pack()
 timeText = tk.Label(frame, text="Testing...", font=("Helvetica", 55), fg='white', bg='black', wraplength=w-50)
 timeText.pack()
 
-#root.configure(cursor='@1x1.xbm white')
+import sys
+if sys.platform.startswith('linux'):
+    root.configure(cursor='@1x1.xbm white')
 
 def XBMCfunction(func, params=[]):
     jsondata = jsonrpclib.dumps(params, func)
@@ -49,41 +51,53 @@ def XBMCfunction(func, params=[]):
     req.add_header('Content-Type', 'application/json')
     handle = urllib2.urlopen(req, timeout=1)
     html = handle.read()
+    #print html
     result = json.loads(html)
     return result['result']
 
-noupdates = 0
 linecount = 0
 fontsize = 65
 
 def getdata():
-    global noupdates, text, timeText, linecount, fontsize
     try:
         players = XBMCfunction('Player.GetActivePlayers')
         
         output = '' 
         
-        if len(players) == 0:
-            output += '\n' + currentquote
-            timeOutput = ''
-            if noupdates < 600: noupdates+=1
-            fontsize = 70
-            timeText.config(font=("Helvetica", 70))
-        
-        else:
+        if len(players) > 0:
             linecount = 0
-            noupdates=0
             
             playerid = players[0]['playerid']
-            currentJSON = XBMCfunction('Player.GetItem', {'playerid':playerid, 'properties':['showtitle', 'file']})
+            currentJSON = XBMCfunction('Player.GetItem', {'playerid':playerid, 'properties':['file','showtitle', 'title', 'season', 'episode']})
             timeJSON = XBMCfunction('Player.GetProperties', {'playerid': playerid, 'properties':['time','totaltime']})
             
-            showtitle = currentJSON['item']['showtitle']
-            label = currentJSON['item']['label']
+            vidtype = currentJSON['item']['type']
             
-            isYoutube = True
-            try: currentJSON['item']['file'].index('youtube.com')
-            except ValueError: isYoutube = False
+            if vidtype == 'movie':
+                title = currentJSON['item']['title']
+                line1 = ''
+                line2 = title
+                
+            elif vidtype == 'episode':
+                title = currentJSON['item']['title']
+                showtitle = currentJSON['item']['showtitle']
+                season = currentJSON['item']['season']
+                episode = currentJSON['item']['episode']
+                line1 = showtitle
+                line2 = 'S' + str(season) + ' E' + str(episode) + ': ' + title
+                
+            elif vidtype == 'unknown':
+                label = currentJSON['item']['label']
+                try:
+                    currentJSON['item']['file'].index('youtube.com')
+                    line1 = 'YouTube'
+                except ValueError: line1 = ''
+                line2 = label
+                
+            output = line1 + '\n' + line2
+            linecount = (len(line1)/26 + 1) + (len(line2)/26 + 1)
+            if linecount > 4: fontsize = 50
+            else: fontsize = 65
             
             seekTime = ''
             totTime = ''
@@ -107,54 +121,29 @@ def getdata():
                     
                 seekTime += str(timeJSON['time']['seconds']).zfill(2)
                 totTime += str(timeJSON['totaltime']['seconds']).zfill(2)
-            
-            if(isYoutube):
-                #Youtube
-                output += 'YouTube: '
-                linecount += len('YouTube: ')/26 + 1
-            
-            elif len(showtitle) > 0:
-                #TV show
-                output += showtitle + '\n'
-                linecount += len(showtitle)/26 + 1
-                
-            output += label
-            linecount += len(label)/26 + 1
         
             timeOutput = seekTime +' / '+ totTime
+            
+            ts = time.strftime('%I:%M %p')
+            if ts[0] == '0': ts = ts[1:]
+            timeOutput += '\n' + ts
         
-        ts = time.strftime('%I:%M %p')
-        if ts[0] == '0': ts = ts[1:]
-        
-        timeOutput += '\n' + ts
-        if noupdates >= 600:
+        else:
+            fontsize = 70
             ts = time.strftime('%I:%M %p\n\n%b %d, %Y')
             if ts[0] == '0': ts = ts[1:]
             output = '\n'+ ts
             timeOutput = ''
         
-        #output = 'blah\nblah\nblah\nblahhhalhfljdlkfadfaldksflasdhflhasdlf'
         text.config(text=output)
         timeText.config(text=timeOutput)
-    
-        if linecount > 4: fontsize = 50
-        else: fontsize = 65
+        
         text.config(font=("Helvetica", fontsize))
         text.pack(side=tk.TOP, ipady=50)
-        
-        #dictionary['Changed'] = '1'
-        #if 'Changed' in dictionary and dictionary['Changed'] == '1':
-        #    fontsize = 70
-        #    while text.winfo_height() > 200:
-        #        print text.winfo_height(), fontsize
-        #        fontsize -= 1
-        #        text.config(font=("Helvetica", fontsize))
-        #        text.pack(side=tk.TOP, ipady=50)
-        
         timeText.pack(side=tk.BOTTOM, ipady=30)
         
     except:
-        print 'ERROR: XBMC not available'
+        #print 'ERROR: XBMC not available'
         output = 'ERROR: XBMC not available\n\n'
         toutput = time.strftime('%I:%M %p\n\n%b %d, %Y')
         text.config(text=output)
@@ -164,14 +153,12 @@ def getdata():
         timeText.config(text=toutput)
         timeText.config(font=("Helvetica", 70))
         timeText.pack(side=tk.TOP, ipady=50)
-       
-        if noupdates < 600: noupdates+=1
         return
 
-def newQuote():
-    global currentquote
-    currentquote = choice(quotes)
-    root.after(3600000, newQuote)
+#def newQuote():
+#    global currentquote
+#    currentquote = choice(quotes)
+#    root.after(3600000, newQuote)
 
 def loop():
     getdata()
@@ -179,5 +166,5 @@ def loop():
     root.after(500,loop)
     
 root.after(500,loop)
-root.after(500,newQuote)
+#root.after(500,newQuote)
 root.mainloop()
