@@ -68,11 +68,11 @@ def getdata():
             linecount = 0
             
             playerid = players[0]['playerid']
-            currentJSON = XBMCfunction('Player.GetItem', {'playerid':playerid, 'properties':['file','showtitle', 'title', 'season', 'episode']})
+            currentJSON = XBMCfunction('Player.GetItem', {'playerid':playerid, 'properties':['file','showtitle', 'title', 'season', 'episode', 'artist']})
             timeJSON = XBMCfunction('Player.GetProperties', {'playerid': playerid, 'properties':['time','totaltime']})
             
             vidtype = currentJSON['item']['type']
-            
+
             if vidtype == 'movie':
                 title = currentJSON['item']['title']
                 line1 = ''
@@ -85,7 +85,11 @@ def getdata():
                 episode = currentJSON['item']['episode']
                 line1 = showtitle
                 line2 = 'S' + str(season) + ' E' + str(episode) + ': ' + title
-                
+            elif vidtype == 'song':
+                title = currentJSON['item']['title']
+                artist = currentJSON['item']['artist'][0]
+                line1 = title
+                line2 = 'by ' + artist
             elif vidtype == 'unknown':
                 label = currentJSON['item']['label']
                 try:
