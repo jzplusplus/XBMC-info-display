@@ -1,3 +1,4 @@
+#!/usr/bin/python
 '''
 Created on Aug 14, 2012
 
@@ -37,7 +38,7 @@ timeText.pack()
 
 import sys
 if sys.platform.startswith('linux'):
-    root.configure(cursor='@1x1.xbm white')
+    root.configure(cursor='@/home/pi/Desktop/XBMC-info-display-master/1x1.xbm white')
 
 def XBMCfunction(func, params=[]):
     jsondata = jsonrpclib.dumps(params, func)
