@@ -73,7 +73,7 @@ def getdata():
             timeJSON = XBMCfunction('Player.GetProperties', {'playerid': playerid, 'properties':['time','totaltime']})
             
             vidtype = currentJSON['item']['type']
-
+            #print vidtype
             if vidtype == 'movie':
                 title = currentJSON['item']['title']
                 line1 = ''
@@ -91,7 +91,7 @@ def getdata():
                 artist = currentJSON['item']['artist'][0]
                 line1 = title
                 line2 = 'by ' + artist
-            elif vidtype == 'unknown':
+            elif vidtype == 'musicvideo' or vidtype == 'unknown':
                 label = currentJSON['item']['label']
                 try:
                     currentJSON['item']['file'].index('youtube.com')
@@ -147,8 +147,9 @@ def getdata():
         text.pack(side=tk.TOP, ipady=50)
         timeText.pack(side=tk.BOTTOM, ipady=30)
         
-    except:
+    except Exception as ex:
         #print 'ERROR: XBMC not available'
+        print ex
         output = 'ERROR: XBMC not available\n\n'
         toutput = time.strftime('%I:%M %p\n\n%b %d, %Y')
         text.config(text=output)
